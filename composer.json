@@ -25,7 +25,14 @@
     "mustache/mustache": "^2.13",
     "psr/cache": "^1.0",
     "psr/log": "^1.0",
+    "symfony/config": "^5.3",
+    "symfony/dependency-injection": "^5.3",
     "symfony/dotenv": "^5.3",
+    "symfony/event-dispatcher": "^5.3",
+    "symfony/framework-bundle": "^5.3",
+    "symfony/http-foundation": "^5.3",
+    "symfony/http-kernel": "^5.3",
+    "symfony/routing": "^5.3",
     "vierbergenlars/php-semver": "^3.0"
   },
   "require-dev": {
