@@ -58,7 +58,8 @@ class LoginController extends AbstractController
                     sprintf(
                         'Authentication failed: %s',
                         $exception->getMessage()
-                    )
+                    ),
+                    401
                 );
             }
         }

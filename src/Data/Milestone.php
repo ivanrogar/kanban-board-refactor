@@ -16,7 +16,7 @@ class Milestone extends DataTransferObject
     /**
      * @var string
      */
-    public $name;
+    public $title;
 
     /**
      * @var string

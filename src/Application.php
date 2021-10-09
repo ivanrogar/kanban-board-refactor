@@ -15,6 +15,9 @@ use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\HttpKernel\Kernel as BaseKernel;
 use Symfony\Component\Routing\Loader\Configurator\RoutingConfigurator;
 
+/**
+ * @codeCoverageIgnore
+ */
 class Application extends BaseKernel
 {
     use MicroKernelTrait;

@@ -6,7 +6,10 @@ namespace KanbanBoard\Controller;
 
 use KanbanBoard\Exception\Git\UnsupportedTypeException;
 use KanbanBoard\Factory\GitFactory;
+use Mustache_Engine;
+use Mustache_Loader_FilesystemLoader;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Response;
 
 class BoardController extends AbstractController
 {
@@ -20,7 +23,7 @@ class BoardController extends AbstractController
     /**
      * @throws UnsupportedTypeException
      */
-    public function boardAction()
+    public function boardAction(): Response
     {
         $repositories = explode(',', $_ENV['GH_REPOSITORIES']);
 
@@ -31,5 +34,15 @@ class BoardController extends AbstractController
         foreach ($repositories as $repository) {
             $milestones = array_merge($milestones, $git->getMilestones($repository));
         }
+
+        $engine = new Mustache_Engine([
+            'loader' => new Mustache_Loader_FilesystemLoader(
+                dirname(__FILE__) . '/../../views'
+            ),
+        ]);
+
+        return new Response(
+            $engine->render('index', ['milestones' => $milestones])
+        );
     }
 }

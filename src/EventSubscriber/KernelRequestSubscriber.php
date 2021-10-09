@@ -62,9 +62,12 @@ class KernelRequestSubscriber implements EventSubscriberInterface
                 try {
                     $match = $this->router->match($request->getPathInfo());
 
-                    $route = $match['_route'];
+                    $route = $match['_route'] ?? null;
 
-                    if (!in_array($route, [Application::ROUTE_OAUTH_INDEX, Application::ROUTE_OAUTH_REDIRECT_INDEX])) {
+                    if (
+                        $route !== null &&
+                        !in_array($route, [Application::ROUTE_OAUTH_INDEX, Application::ROUTE_OAUTH_REDIRECT_INDEX])
+                    ) {
                         $event->setResponse(
                             new RedirectResponse(
                                 $this->router->generate(Application::ROUTE_OAUTH_INDEX)

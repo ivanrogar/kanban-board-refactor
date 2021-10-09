@@ -15,8 +15,6 @@ use Michelf\Markdown;
 
 class Github implements AuthenticatedGitInterface
 {
-    public const PAUSED_LABELS = [];
-
     private ClientFactory $clientFactory;
     private AuthenticatorInterface $authenticator;
 
@@ -24,12 +22,15 @@ class Github implements AuthenticatedGitInterface
     private ?Issue $issueClient = null;
     private ?Issue\Milestones $milestonesClient = null;
 
+    private array $pausedLabels = [];
+
     public function __construct(
         ClientFactory $clientFactory,
-        AuthenticatorInterface $authenticator
+        AuthenticatorInterface $authenticator,
     ) {
         $this->clientFactory = $clientFactory;
         $this->authenticator = $authenticator;
+        $this->pausedLabels = explode(',', $_ENV['GH_PAUSED_LABELS']);
     }
 
     public function getAuthenticator(): AuthenticatorInterface
@@ -51,6 +52,10 @@ class Github implements AuthenticatedGitInterface
         foreach ($response as $milestoneItem) {
             $issues = $this->getIssues($repository, $milestoneItem['number']);
 
+            if (empty($issues)) {
+                continue;
+            }
+
             $progress = $this->getProgress($milestoneItem['closed_issues'], $milestoneItem['open_issues']);
 
             if ($progress->total === 0) {
@@ -60,7 +65,7 @@ class Github implements AuthenticatedGitInterface
             $milestone = new Milestone();
 
             $milestone->id = $milestoneItem['id'];
-            $milestone->name = $milestoneItem['title'];
+            $milestone->title = $milestoneItem['title'];
             $milestone->url = $milestoneItem['url'];
             $milestone->repository = $repository;
             $milestone->progress = $progress;
@@ -89,7 +94,7 @@ class Github implements AuthenticatedGitInterface
         }
 
         usort($milestoneData, function (Milestone $first, Milestone $second) {
-            return strcmp($first->name, $second->name);
+            return strcmp($first->title, $second->title);
         });
 
         return $milestoneData;
@@ -121,7 +126,7 @@ class Github implements AuthenticatedGitInterface
 
             $issue->id = $issueItem['id'];
             $issue->number = $issueItem['number'];
-            $issue->title = $issueItem['title'];
+            $issue->title = str_replace('/', ' ', $issueItem['title']);
             $issue->body = Markdown::defaultTransform($issueItem['body']);
             $issue->url = $issueItem['html_url'];
 
@@ -139,7 +144,7 @@ class Github implements AuthenticatedGitInterface
                 $state = \KanbanBoard\Data\Issue::STATE_ACTIVE;
             }
 
-            $issue->paused = $this->hasLabels($issueItem, self::PAUSED_LABELS);
+            $issue->paused = $this->hasLabels($issueItem, $this->pausedLabels);
 
             $issue->state = $state;
 
