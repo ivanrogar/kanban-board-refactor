@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace KanbanBoard\Contract;
 
+use KanbanBoard\Exception\Authenticator\AuthenticationFailedException;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 
 interface AuthenticatorInterface
 {
@@ -17,7 +17,7 @@ interface AuthenticatorInterface
     public function getAuthorizationUrl(): RedirectResponse;
 
     /**
-     * @throws UnauthorizedHttpException
+     * @throws AuthenticationFailedException
      */
     public function authenticate(Request $request): void;
 }

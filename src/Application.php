@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace KanbanBoard;
 
-use KanbanBoard\Controller\BoardController;
-use KanbanBoard\Controller\LoginController;
+use GuzzleHttp\Client;
+use Sensio\Bundle\FrameworkExtraBundle\SensioFrameworkExtraBundle;
 use Symfony\Bundle\FrameworkBundle\FrameworkBundle;
 use Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\EventDispatcher\EventDispatcher;
+use Symfony\Component\HttpFoundation\Session\Session;
+use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\HttpKernel\Kernel as BaseKernel;
 use Symfony\Component\Routing\Loader\Configurator\RoutingConfigurator;
 
@@ -27,14 +29,26 @@ class Application extends BaseKernel
     {
         return [
             new FrameworkBundle(),
+            new SensioFrameworkExtraBundle(),
         ];
     }
 
     protected function configureContainer(ContainerConfigurator $container): void
     {
-        $container
-            ->services()
-            ->set('event_dispatcher', EventDispatcher::class);
+        $services = $container->services();
+
+        $services
+            ->set('event_dispatcher', EventDispatcher::class)
+            ->set('session', Session::class)
+            ->set(SessionInterface::class, Session::class)
+            ->set(Client::class, Client::class);
+
+        $defaults = $services->defaults();
+
+        $defaults
+            ->autowire(true)
+            ->autoconfigure(true)
+            ->load('KanbanBoard\\', '.');
     }
 
     protected function configureRoutes(RoutingConfigurator $routes): void
@@ -45,30 +59,21 @@ class Application extends BaseKernel
                 '/login/oauth'
             )
             ->controller(
-                [
-                    LoginController::class,
-                    'loginAction'
-                ]
+                'KanbanBoard\Controller\LoginController::loginAction'
             )
             ->add(
                 self::ROUTE_OAUTH_REDIRECT_INDEX,
                 '/login/oauth/redirect'
             )
             ->controller(
-                [
-                    LoginController::class,
-                    'redirectAction'
-                ]
+                'KanbanBoard\Controller\LoginController::redirectAction'
             )
             ->add(
                 self::ROUTE_BOARD,
                 '/'
             )
             ->controller(
-                [
-                    BoardController::class,
-                    'boardAction'
-                ]
+                'KanbanBoard\Controller\BoardController::boardAction',
             );
     }
 }

@@ -43,6 +43,6 @@ class GitFactory
      */
     public function createDefault(): GitInterface
     {
-        return $this->create(getenv('GIT_TYPE'));
+        return $this->create($_ENV['GIT_TYPE']);
     }
 }

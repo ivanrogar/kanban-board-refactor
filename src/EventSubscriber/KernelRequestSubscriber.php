@@ -18,6 +18,9 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
+use Symfony\Component\Routing\Exception\MethodNotAllowedException;
+use Symfony\Component\Routing\Exception\NoConfigurationException;
+use Symfony\Component\Routing\Exception\ResourceNotFoundException;
 use Symfony\Component\Routing\RouterInterface;
 
 class KernelRequestSubscriber implements EventSubscriberInterface
@@ -54,11 +57,22 @@ class KernelRequestSubscriber implements EventSubscriberInterface
             $authenticator = $git->getAuthenticator();
 
             if (!$authenticator->isAuthenticated()) {
-                $event->setResponse(
-                    new RedirectResponse(
-                        $this->router->generate(Application::ROUTE_OAUTH_INDEX)
-                    )
-                );
+                $request = $event->getRequest();
+
+                try {
+                    $match = $this->router->match($request->getPathInfo());
+
+                    $route = $match['_route'];
+
+                    if (!in_array($route, [Application::ROUTE_OAUTH_INDEX, Application::ROUTE_OAUTH_REDIRECT_INDEX])) {
+                        $event->setResponse(
+                            new RedirectResponse(
+                                $this->router->generate(Application::ROUTE_OAUTH_INDEX)
+                            )
+                        );
+                    }
+                } catch (NoConfigurationException | ResourceNotFoundException | MethodNotAllowedException) {
+                }
             }
         }
     }

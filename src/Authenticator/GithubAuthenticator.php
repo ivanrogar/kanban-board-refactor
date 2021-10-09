@@ -6,13 +6,11 @@ namespace KanbanBoard\Authenticator;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
-use KanbanBoard\Application;
 use KanbanBoard\Contract\AuthenticatorInterface;
+use KanbanBoard\Exception\Authenticator\AuthenticationFailedException;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
-use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
-use Symfony\Component\Routing\RouterInterface;
 
 class GithubAuthenticator implements AuthenticatorInterface
 {
@@ -24,16 +22,13 @@ class GithubAuthenticator implements AuthenticatorInterface
 
     private SessionInterface $session;
     private Client $client;
-    private RouterInterface $router;
 
     public function __construct(
         SessionInterface $session,
         Client $client,
-        RouterInterface $router
     ) {
         $this->session = $session;
         $this->client = $client;
-        $this->router = $router;
     }
 
     public function isAuthenticated(): bool
@@ -51,10 +46,9 @@ class GithubAuthenticator implements AuthenticatorInterface
         $url = self::AUTHORIZE_URL;
 
         $query = [
-            'redirect_uri' => $this->router->generate(Application::ROUTE_OAUTH_REDIRECT_INDEX),
-            'client_id' => getenv('GH_CLIENT_ID'),
+            'client_id' => $_ENV['GH_CLIENT_ID'],
             'scope' => 'repo',
-            'state' => getenv('GH_STATE')
+            'state' => $_ENV['GH_STATE']
         ];
 
         return new RedirectResponse(
@@ -67,11 +61,15 @@ class GithubAuthenticator implements AuthenticatorInterface
      */
     public function authenticate(Request $request): void
     {
+        if ($request->query->has('error_description')) {
+            throw new AuthenticationFailedException($request->query->get('error_description'));
+        }
+
         $data = [
             'code' => $request->get('code'),
             'state' => $request->get('state'),
-            'client_id' => getenv('GH_CLIENT_ID'),
-            'client_secret' => getenv('GH_CLIENT_SECRET'),
+            'client_id' => $_ENV['GH_CLIENT_ID'],
+            'client_secret' => $_ENV['GH_CLIENT_SECRET'],
         ];
 
         $url = self::ACCESS_TOKEN_URL . '?' . http_build_query($data);
@@ -81,7 +79,12 @@ class GithubAuthenticator implements AuthenticatorInterface
                 ->client
                 ->request(
                     'POST',
-                    $url
+                    $url,
+                    [
+                        'headers' => [
+                            'Accept' => 'application/json'
+                        ]
+                    ]
                 );
 
             $data = \json_decode($response->getBody()->getContents(), true);
@@ -90,7 +93,7 @@ class GithubAuthenticator implements AuthenticatorInterface
 
             $this->session->set(self::ACCESS_TOKEN_KEY, $token);
         } catch (GuzzleException $exception) {
-            throw new UnauthorizedHttpException('', $exception->getMessage(), $exception);
+            throw new AuthenticationFailedException($exception->getMessage(), 0, $exception);
         }
     }
 }

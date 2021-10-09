@@ -6,11 +6,13 @@ namespace KanbanBoard\Controller;
 
 use KanbanBoard\Application;
 use KanbanBoard\Contract\AuthenticatedGitInterface;
+use KanbanBoard\Exception\Authenticator\AuthenticationFailedException;
 use KanbanBoard\Exception\Git\UnsupportedTypeException;
 use KanbanBoard\Factory\GitFactory;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class LoginController extends AbstractController
 {
@@ -44,12 +46,21 @@ class LoginController extends AbstractController
     /**
      * @throws UnsupportedTypeException
      */
-    public function redirectAction(Request $request): RedirectResponse
+    public function redirectAction(Request $request): Response | RedirectResponse
     {
         $git = $this->gitFactory->createDefault();
 
         if ($git instanceof AuthenticatedGitInterface) {
-            $git->getAuthenticator()->authenticate($request);
+            try {
+                $git->getAuthenticator()->authenticate($request);
+            } catch (AuthenticationFailedException $exception) {
+                return new Response(
+                    sprintf(
+                        'Authentication failed: %s',
+                        $exception->getMessage()
+                    )
+                );
+            }
         }
 
         return new RedirectResponse(
