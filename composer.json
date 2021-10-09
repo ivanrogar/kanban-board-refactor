@@ -1,0 +1,37 @@
+{
+  "type": "project",
+  "license": "proprietary",
+  "minimum-stability": "stable",
+  "prefer-stable": true,
+  "config": {
+    "preferred-install": {
+      "*": "dist"
+    },
+    "sort-packages": true
+  },
+  "autoload": {
+    "psr-4": {
+      "KanbanBoard\\": "src/"
+    }
+  },
+  "require": {
+    "php": "^8.0",
+    "cache/adapter-common": "^1.2",
+    "cache/filesystem-adapter": "^1.1",
+    "guzzlehttp/guzzle": "^7.0",
+    "http-interop/http-factory-guzzle": "^1.0",
+    "knplabs/github-api": "^3.3",
+    "michelf/php-markdown": "^1.9",
+    "mustache/mustache": "^2.13",
+    "psr/cache": "^1.0",
+    "psr/log": "^1.0",
+    "symfony/dotenv": "^5.3",
+    "vierbergenlars/php-semver": "^3.0"
+  },
+  "require-dev": {
+    "friendsofphp/php-cs-fixer": "^3.0",
+    "squizlabs/php_codesniffer": "*",
+    "phpstan/phpstan": "^0.12",
+    "phpunit/phpunit": "^9.5"
+  }
+}
